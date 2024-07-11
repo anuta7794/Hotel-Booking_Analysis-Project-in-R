@@ -1,0 +1,400 @@
+---
+title: "Hotel Booking Analysis"
+author: "Anna Manina"
+date: "2024-07-01"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Introduction
+
+The data in this project is originally from the article [Hotel Booking Demand Datasets](https://www.sciencedirect.com/science/article/pii/S2352340918315191), written by Nuno Antonio, Ana Almeida, and Luis Nunes for Data in Brief, Volume 22, February 2019.
+
+The data was downloaded and cleaned by Thomas Mock and Antoine Bichat for #TidyTuesday during the week of February 11th, 2020 [here](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-02-11/readme.md).
+
+To learn more about the dataset click [here](https://www.kaggle.com/jessemostipak/hotel-booking-demand).
+
+## Scenario
+
+In this scenario, I am a junior data analyst working for a hotel booking company. I have been asked to clean a .csv file that was created after querying a database to combine two different tables from different hotels. In order to learn more about this data, I am going to need to use functions to preview the data's structure, including its columns and rows. I will also need to use basic cleaning functions to prepare this data for analysis, and then create visualizations that highlight different aspects of the data to present to my stakeholder. 
+
+#### Step 1: Load packages
+
+```{r eval = FALSE}
+install.packages("tidyverse")
+install.packages("skimr")
+install.packages("janitor")
+install.packages("rmarkdown")
+install.packages("readr")
+```
+
+```{r eval = FALSE}
+library(tidyverse)
+library(skimr)
+library(janitor)
+library(rmarkdown)
+library(readr)
+```
+
+#### Step 2: Import Data
+
+```{r echo = TRUE}
+bookings_df <- readr::read_csv("C:/Users/denni/Documents/hotel_bookings.csv.csv")
+```
+
+#### Step 3: Get to know Data
+
+```{r echo = TRUE}
+head(bookings_df)
+```
+
+```{r echo = TRUE}
+str(bookings_df)
+```
+
+```{r echo = TRUE}
+dplyr::glimpse(bookings_df)
+```
+
+```{r echo = TRUE}
+colnames(bookings_df)
+```
+
+```{r echo = TRUE}
+skimr::skim_without_charts(bookings_df)
+```
+
+```{r echo = TRUE}
+new_df <- dplyr::select(bookings_df, `adr`, adults)
+```
+
+```{r echo = TRUE}
+dplyr::mutate(new_df, total = `adr` / adults)
+```
+
+#### Step 4: Clean Data
+
+```{r echo = TRUE}
+library(dplyr)
+library(tidyr)
+```
+
+Based on my notes, I am primarily interested in the following variables: *hotel*, *is_canceled*, *lead_time*. I created a new data frame with just those columns, calling it *`trimmed_df`*:
+
+```{r echo = TRUE} 
+trimmed_df <- bookings_df %>% 
+  select(hotel, is_canceled, lead_time)
+```
+
+I renamed the variable *'hotel'* to be named *'hotel_type'* to be crystal clear on what the data is about:
+
+```{r echo = TRUE} 
+trimmed_df %>% 
+  select(hotel, is_canceled, lead_time) %>% 
+  rename(hotel_type = hotel)
+```
+
+The next task was to combine the arrival month and year into one column using the *unite()* function:
+
+```{r echo = TRUE} 
+arrival_df <- bookings_df %>%
+  select(arrival_date_year, arrival_date_month) %>% 
+  unite(arrival_month_year, c("arrival_date_month", "arrival_date_year"), sep = " ")
+```
+
+I also needed to create a new column that would sum up all the adults, children, and babies on a reservation for the total number of people. I used the *`mutate()`* function to make changes to my columns:
+
+```{r echo = TRUE} 
+guests_df <- bookings_df %>%
+  mutate(guests = adults + children + babies)
+```
+
+```{r echo = TRUE} 
+head(guests_df)
+```
+
+For the summary statistics, I calculated the total number of canceled bookings and the average lead time for booking:
+
+```{r echo = TRUE} 
+canceled_bookings_df <- bookings_df %>%
+  summarize(number_canceled = sum(is_canceled),
+            average_lead_time = mean(lead_time))
+```
+
+```{r echo = TRUE} 
+head(canceled_bookings_df)
+```
+
+#### Step 5: Manipulate Data
+
+The data needs to be arranged by most lead time to least lead time because the stakeholder wants to focus on bookings that were made far in advance:
+
+```{r echo = TRUE} 
+arrange(bookings_df, lead_time)
+```
+
+```{r echo = TRUE} 
+arrange(bookings_df, desc(lead_time))
+```
+
+**_The highest lead time for a hotel booking in this data set is 737 days._**
+
+I created a new data frame named *'bookings_df_v2'* that had those changes saved:
+
+```{r echo = TRUE} 
+bookings_df_v2 <-
+  arrange(bookings_df, desc(lead_time))
+```
+
+```{r echo = TRUE} 
+head(bookings_df_v2)
+```
+
+I can also find out the maximum and minimum lead times without sorting the whole data set using the *`arrange()`* function, and using the *max()* and *min()* functions instead:
+
+```{r echo = TRUE} 
+max(bookings_df$lead_time)
+```
+
+```{r echo = TRUE} 
+min(bookings_df$lead_time)
+```
+
+Now, I just want to know what the average lead time for booking is because I need to find out how early the stakeholder should run promotions for hotel rooms. I used the *`mean()`* function to answer that question:
+
+```{r echo = TRUE} 
+mean(bookings_df$lead_time)
+```
+
+```{r echo = TRUE} 
+mean(bookings_df_v2$lead_time)
+```
+
+**_The average lead time is 104.0114 days._**
+
+Now, I want to know what the average lead time before booking is for just city hotels. My first step is creating a new data set that only contains data about city hotels. I did that using the *`filter()`* function, and named my new data frame *'bookings_df_city'*:
+
+```{r echo = TRUE} 
+bookings_df_city <- 
+  filter(bookings_df, bookings_df$hotel=="City Hotel")
+```
+
+```{r echo = TRUE} 
+head(bookings_df_city)
+```
+
+```{r echo = TRUE} 
+mean(bookings_df_city$lead_time)
+```
+
+Now, I need to know some more information about city hotels, including the maximum and minimum lead time. I am also interested in how they are different from resort hotels. I used the *`group_by()`*, *`summarize()`* functions, and the *pipe operator* to make my code easier to follow. I stored the new data set in a data frame named *'hotel_summary'*:
+
+```{r echo = TRUE} 
+hotel_summary <- 
+  bookings_df %>%
+  group_by(hotel) %>%
+  summarise(average_lead_time=mean(lead_time),
+            min_lead_time=min(lead_time),
+            max_lead_time=max(lead_time))
+```
+
+```{r echo = TRUE} 
+head(hotel_summary)
+```
+
+#### Step 6: Aesthetics and Visualization with ggplot2
+
+```{r echo = TRUE} 
+library(ggplot2)
+```
+
+I used *`ggplot2`* to determine if people with children book hotel rooms in advance. On the x-axis, the plot shows how far in advance a booking is made, with the bookings furthest to the right happening the most in advance. On the y-axis it shows how many children there are in a party:
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_point(mapping = aes(x = lead_time, y = children))
+```
+
+In order to increase weekend bookings, the stakeholder needs to know what group of guests book the most weekend nights in order to target that group in a new marketing campaign:
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_point(mapping = aes(x = stays_in_weekend_nights, y = children))
+```
+
+The stakeholder is also interested in developing promotions based on different booking distributions, but first they need to know how many of the transactions are occurring for each different distribution type.
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_bar(mapping = aes(x = distribution_channel))
+```
+
+**_The TA/TO distribution type has the most number of bookings._**
+
+Now, I need to know if the number of bookings for each distribution type is different depending on whether or not there was a deposit or what market segment they represent:
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_bar(mapping = aes(x = distribution_channel, fill=deposit_type))
+```
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_bar(mapping = aes(x = distribution_channel, fill=market_segment))
+```
+
+#### Step 7: Create Facets
+
+The next task is to create separate charts for each deposit type and market segment to help the stakeholder understand the differences more clearly.
+
+A different chart for each deposit type:
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_bar(mapping = aes(x = distribution_channel)) +
+  facet_wrap(~deposit_type)
+```
+
+A different chart for each market segment:
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_bar(mapping = aes(x = distribution_channel)) +
+  facet_wrap(~market_segment)
+```
+
+I used the *`facet_grid`* function to include plots even if they were empty.
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_bar(mapping = aes(x = distribution_channel)) +
+  facet_grid(~deposit_type)
+```
+
+Finally, I put all of this in one chart to explore the differences by deposit type and market segment:
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_bar(mapping = aes(x = distribution_channel)) +
+  facet_wrap(~deposit_type~market_segment)
+```
+
+#### Step 8: Apply Filters
+
+After considering all the data, my stakeholder decides to send the promotion to families that make online bookings for city hotels. The online segment is the fastest growing segment, and families tend to spend more at city hotels than other types of guests. I need to create a plot that shows the relationship between lead time and guests traveling with children for online bookings at city hotels. This will give the stakeholder a better idea of the specific timing for the promotion: 
+
+```{r echo = TRUE} 
+onlineta_city_hotels <- filter(bookings_df, 
+                               (hotel=="City Hotel" & 
+                                  bookings_df$market_segment=="Online TA"))
+```
+
+```{r echo = TRUE} 
+View(onlineta_city_hotels)
+```
+
+```{r echo = TRUE} 
+onlineta_city_hotels_v2 <- bookings_df %>%
+  filter(hotel=="City Hotel") %>%
+  filter(market_segment=="Online TA")
+```
+
+```{r echo = TRUE} 
+ggplot(data = onlineta_city_hotels) +
+  geom_point(mapping = aes(x = lead_time, y = children))
+```
+
+**_The plot reveals that bookings with children tend to have a shorter lead time, and bookings with 3 children have a significantly shorter lead time (<200 days). So, promotions targeting families can be made closer to the valid booking dates._**
+
+#### Step 9: Add Annotations
+
+In these visualizations it is unclear where the data is from, what the main takeaway is, or even what the data is showing. To explain all of that, I leveraged annotations in *`ggplot2`*:
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_bar(mapping = aes(x = market_segment)) +
+  facet_wrap(~hotel) +
+  labs(title="Comparison of Market Segments by Hotel Type for Hotel Bookings")
+```
+
+```{r echo = TRUE} 
+min(bookings_df$arrival_date_year)
+```
+
+```{r echo = TRUE} 
+max(bookings_df$arrival_date_year)
+```
+
+```{r echo = TRUE} 
+mindate <- min(bookings_df$arrival_date_year)
+maxdate <- max(bookings_df$arrival_date_year)
+```
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_bar(mapping = aes(x = market_segment)) +
+  facet_wrap(~hotel) +
+  labs(title="Comparison of market segments by hotel type for hotel bookings",
+       subtitle=paste0("Data from: ", mindate, " to ", maxdate))
+```
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_bar(mapping = aes(x = market_segment)) +
+  facet_wrap(~hotel) +
+  labs(title="Comparison of market segments by hotel type for hotel bookings",
+       caption=paste0("Data from: ", mindate, " to ", maxdate))
+```
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_bar(mapping = aes(x = market_segment)) +
+  facet_wrap(~hotel) +
+  labs(title="Comparison of Market Segments by Hotel Type for Hotel Bookings",
+       caption=paste0("Data from: ", mindate, " to ", maxdate),
+       x="Market Segment",
+       y="Number of Bookings")
+```
+
+##### Step 10: Save the Plot
+
+```{r echo = TRUE} 
+ggsave('hotel_booking_chart.png',
+       width=16,
+       height=8)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+tinytex::install_tinytex()
+
+
