@@ -37,7 +37,7 @@ I imported the data with **_read_csv()_** function.
 
 Before I started cleaning my data, I took some time to explore it. I used several functions, including:
 
-**_-"head()"_**; 
+**_"head()"_**; 
 
 to summarize and preview the data: **_"str()"_** and **_"glimpse()"_**;
 
