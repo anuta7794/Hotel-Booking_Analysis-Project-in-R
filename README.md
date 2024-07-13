@@ -79,7 +79,8 @@ I used **_"ggplot2"_** to determine:
   
 - if the number of bookings for each distribution type is different depending on whether or not there was a deposit or what market segment they represent;
 
-/Hotel_Booking_Market_Segments_Chart.png  
+![Hotel_Booking_Market_Segments_Chart](https://github.com/user-attachments/assets/e830a562-5de0-486c-8140-38eb54157b7d)
+
   
 ### Step 7: Create Facets
 
