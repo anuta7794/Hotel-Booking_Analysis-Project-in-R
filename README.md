@@ -133,7 +133,13 @@ After considering all the data, my stakeholder decides to send the promotion to 
 
 I leveraged annotations in **_"ggplot2_"** to make it clear where the data is from, what the main takeaway is.
 
+### Step 10: Save the Plot
 
+```
+ggsave('hotel_booking_chart.png',
+       width=16,
+       height=8)
+```
 
 
 
