@@ -67,19 +67,46 @@ canceled_bookings_df <- bookings_df %>%
 
 1) The stakeholder wants to focus on bookings that were made far in advance. The **_"arrange()"_** function in descending order was applied to arrange the data by most lead time to least lead time.
 
-2) I created a new data frame named *'bookings_df_v2'* that had those changes saved.
+```
+arrange(bookings_df, desc(lead_time))
+```
 
-3) I want to know what the average lead time for booking is because I need to find out how early the stakeholder should run promotions for hotel rooms. I used the **_"mean()"_** function to answer that question.
+3) I created a new data frame named *'bookings_df_v2'* that had those changes saved.
 
-4) The next task was to see what the average lead time before booking is for just city hotels. My first step was creating a new data set that only contains data about city hotels. I did that using the **_"filter()"_** function, and named my new data frame *'bookings_df_city'*. Then, I needed to know some more information about city hotels, including the maximum and minimum lead time. I was also interested in how they are different from resort hotels. I used the **_"group_by()"_**, **_"summarize()"_** functions, and the **_pipe operator_** to make my code easier to follow. I stored the new data set in a data frame named *'hotel_summary'*.
+4) I want to know what the average lead time for booking is because I need to find out how early the stakeholder should run promotions for hotel rooms. I used the **_"mean()"_** function to answer that question.
+
+```
+mean(bookings_df_v2$lead_time)
+```
+
+6) The next task was to see what the average lead time before booking is for just city hotels. My first step was creating a new data set that only contains data about city hotels. I did that using the **_"filter()"_** function, and named my new data frame *'bookings_df_city'*. Then, I needed to know some more information about city hotels, including the maximum and minimum lead time. I was also interested in how they are different from resort hotels. I used the **_"group_by()"_**, **_"summarize()"_** functions, and the **_pipe operator_** to make my code easier to follow. I stored the new data set in a data frame named *'hotel_summary'*.
+
+``` 
+hotel_summary <- 
+  bookings_df %>%
+  group_by(hotel) %>%
+  summarise(average_lead_time=mean(lead_time),
+            min_lead_time=min(lead_time),
+            max_lead_time=max(lead_time))
+```
 
 ### Step 6: Aesthetics and Visualization with ggplot2
 
 I used **_"ggplot2"_** to determine:
 
 - if people with children book hotel rooms in advance;
+
+```
+ggplot(data = bookings_df) +
+  geom_point(mapping = aes(x = lead_time, y = children))
+```
   
 - what group of guests book the most weekend nights in order to target that group in a new marketing campaign;
+
+```
+ggplot(data = bookings_df) +
+  geom_point(mapping = aes(x = stays_in_weekend_nights, y = children))
+```
   
 - how many of the transactions are occurring for each different distribution type developing promotions based on different booking distributions;
   
@@ -90,7 +117,13 @@ I used **_"ggplot2"_** to determine:
   
 ### Step 7: Create Facets
 
-The next task was to create separate charts for each deposit type and market segment using **_"ggplot2"_** to help the stakeholder understand the differences more clearly. I used the **_"facet_grid"_** function to include plots even if they were empty.
+The next task was to create separate charts for each deposit type and market segment using **_"ggplot2"_** to help the stakeholder understand the differences more clearly. I used the **_"facet_grid"_** function to include plots even if they were empty, and **_"facet_wrap"_** function - to put all of this in one chart to explore the differences by deposit type and market segment.
+
+```{r echo = TRUE} 
+ggplot(data = bookings_df) +
+  geom_bar(mapping = aes(x = distribution_channel)) +
+  facet_wrap(~deposit_type~market_segment)
+```
 
 ### Step 8: Apply Filters
 
