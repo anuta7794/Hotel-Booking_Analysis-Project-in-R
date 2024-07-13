@@ -57,6 +57,12 @@ to provide a detailed summary of the data: **_"skim_without_charts()"_**.
 
 5) For the summary statistics, I calculated the total number of canceled bookings and the average lead time for booking using **_"summarize()"_** function.
 
+```
+canceled_bookings_df <- bookings_df %>%
+  summarize(number_canceled = sum(is_canceled),
+            average_lead_time = mean(lead_time))
+```
+
 ### Step 5: Manipulate Data
 
 1) The stakeholder wants to focus on bookings that were made far in advance. The **_"arrange()"_** function in descending order was applied to arrange the data by most lead time to least lead time.
